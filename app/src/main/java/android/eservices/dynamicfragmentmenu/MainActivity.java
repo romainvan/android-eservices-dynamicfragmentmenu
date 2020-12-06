@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.navigation.NavigationView;
 
@@ -68,6 +69,13 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
                 //TODO react according to the selected item menu
                 //We need to display the right fragment according to the menu item selection.
+                if(menuItem.getOrder() == 2){
+                    logoff();
+                    return false;
+                }
+                if(navigationView.getCheckedItem() != menuItem){
+                    replaceFragment(getSelectedFragment(menuItem.getOrder()));
+                }
                 //Any created fragment must be cached so it is only created once.
                 //You need to implement this "cache" manually : when you create a fragment based on the menu item,
                 //store it the way you prefer, so when you select this menu item later, you first check if the fragment already exists
@@ -82,9 +90,29 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
         });
     }
 
+    private Fragment getSelectedFragment(int position){
+        Fragment select = fragmentArray.get(position);
+        if(select != null){
+            switch (position){
+                case 1 :
+                    select = FavoritesFragment.newInstance();
+                    break;
+                default:
+                    select = SelectedFragment.newInstance();
+                    break;
+            }
+            fragmentArray.append(position,select);
+        }
+        currentFragment = select;
+        return select;
+    }
 
     private void replaceFragment(Fragment newFragment) {
         //TODO replace fragment inside R.id.fragment_container using a FragmentTransaction
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container,newFragment);
+        //transaction.addToBackStack(null);
+        transaction.commit();
     }
 
     private void logoff() {
