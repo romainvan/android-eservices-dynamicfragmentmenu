@@ -1,6 +1,7 @@
 package android.eservices.dynamicfragmentmenu;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +33,16 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupNavigationElements();
+        if(savedInstanceState != null){
+            currentFragment = getSupportFragmentManager().getFragment(savedInstanceState,FRAGMENT_STORED_KEY);
+            replaceFragment(currentFragment);
+            fragmentArray.put(savedInstanceState.getInt(FRAGMENT_STORED_KEY),currentFragment);
+            updateFavoriteCounter(savedInstanceState.getInt(FRAGMENT_STORED_KEY));
+        }
+        else{
+            navigationView.setSelectedItem(navigationView.getMenu().getItem(0));
+            updateFavoriteCounter(4);
+        }
 
 
         //TODO Restore instance state
@@ -44,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
 
         //Let's imagine we retrieve the stored counter state, before creating the favorite Fragment
         //and then be able to update and manage its state.
-        updateFavoriteCounter(3);
+
     }
 
     @Override
@@ -76,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
                 if(navigationView.getCheckedItem() != menuItem){
                     replaceFragment(getSelectedFragment(menuItem.getOrder()));
                 }
+                drawerLayout.closeDrawers();
+                return true;
                 //Any created fragment must be cached so it is only created once.
                 //You need to implement this "cache" manually : when you create a fragment based on the menu item,
                 //store it the way you prefer, so when you select this menu item later, you first check if the fragment already exists
@@ -85,14 +98,13 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
                 //TODO when we select logoff, I want the Activity to be closed (and so the Application, as it has only one activity)
 
                 //check in the doc what this boolean means and use it the right way ...
-                return false;
             }
         });
     }
 
     private Fragment getSelectedFragment(int position){
         Fragment select = fragmentArray.get(position);
-        if(select != null){
+        if(select == null){
             switch (position){
                 case 1 :
                     select = FavoritesFragment.newInstance();
@@ -111,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
         //TODO replace fragment inside R.id.fragment_container using a FragmentTransaction
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container,newFragment);
-        //transaction.addToBackStack(null);
+        transaction.addToBackStack(null);
         transaction.commit();
     }
 
@@ -132,6 +144,15 @@ public class MainActivity extends AppCompatActivity implements NavigationInterfa
         counterView.setVisibility(counter > 0 ? View.VISIBLE : View.GONE);
         ((TextView) counterView.findViewById(R.id.counter_view)).setText(counterContent);
     }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(FRAGMENT_NUMBER_KEY, navigationView.getCheckedItem().getOrder());
+        getSupportFragmentManager().putFragment(outState, FRAGMENT_STORED_KEY, currentFragment);
+    }
+
+
 
 
     //TODO saveInstanceState to handle
